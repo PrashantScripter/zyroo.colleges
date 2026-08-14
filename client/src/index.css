@@ -1,111 +1,252 @@
+@import url("https://fonts.googleapis.com/css2?family=Pacifico&display=swap");
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] * , .dark, .dark *));
+@plugin "daisyui";
+
+@import "@fontsource/plus-jakarta-sans/400.css";
+@import "@fontsource/plus-jakarta-sans/500.css";
+@import "@fontsource/plus-jakarta-sans/700.css";
+
+@import "@fontsource-variable/montserrat/index.css";
+@import "@fontsource-variable/inter/index.css";
+@import "@fontsource-variable/lexend/index.css";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@font-face {
+  font-family: 'Qasira';
+  src: url('/fonts/Qasira.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'savala';
+  src: url('/fonts/savala.otf') format('opentype');
+  font-weight: normal;  
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'samarkan';
+  src: url('/fonts/SAMARN__.TTF') format('opentype');
+  font-weight: normal;  
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cinzel';
+  src: url('/fonts/CinzelDecorative-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cinzel';
+  src: url('/fonts/CinzelDecorative-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cinzel';
+  src: url('/fonts/CinzelDecorative-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+  --font-montserrat: "Montserrat Variable", sans-serif;
+  --font-inter: 'Inter Variable', sans-serif;
+  --font-lexend: 'Lexend Variable', sans-serif;
+  --font-qasira: 'Qasira', serif;
+  --font-savala: 'savala', serif;
+  --font-samarkan: 'samarkan', serif;
+  --font-cinzel: 'Cinzel', serif;
+
+  /* ☀️ System A: Light Theme Dynamic Variables ("Night Watcher") */
+  --color-logo: #640a10;
+  --color-bg-main: #ffffff;
+  --color-bg-surface: #ffffff;
+  --color-bg-overlay: rgba(0, 0, 0, 0.6);
+  --color-bg-hero: #640a10;
+
+  --color-text-primary: #111111;
+  --color-text-secondary: #333333;
+  --color-text-caption: #777777;
+  --color-text-accent-btn: #ffffff;
+
+  --color-brand-accent: #640a10;
+  --color-brand-hover: #7a1d23;
+  --color-brand-active: #4f080c;
+  --color-brand-highlight: rgba(100, 10, 16, 0.1);
+
+  --color-status-success: #3e8b4f;
+  --color-status-error: #c0392b;
+  --color-status-warning: #ff9800;
+
+  --color-border-default: #e0e0e0;
+}
+
+/* 🌙 System B: Dark Theme Attribute Triggers */
+[data-theme="dark"], .dark {
+  --color-logo: #ffffff;
+  --color-bg-main: #121212;
+  --color-bg-surface: #212121;
+  --color-bg-overlay: rgba(0, 0, 0, 0.2);
+  --color-bg-hero: #121212;
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #dddddd;
+  --color-text-caption: #bbbbbb;
+  --color-text-accent-btn: #ffffff;
+
+  --color-brand-accent: #a1262b;
+  --color-brand-hover: #b03a3c;
+  --color-brand-active: #8a2127;
+  --color-brand-highlight: rgba(161, 38, 43, 0.2);
+
+  --color-status-success: #66bb6a;
+  --color-status-error: #ef5350;
+  --color-status-warning: #ffb74d;
+
+  --color-border-default: #333333;
+}
+
+.pacifico-regular {
+  font-family: "Pacifico", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: 'Geist Variable', sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* ☀️ Connect Shadcn Tokens directly to your Custom Light Theme Variables */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  --background: var(--color-bg-main);
+  --foreground: var(--color-text-primary);
+  --card: var(--color-bg-surface);
+  --card-foreground: var(--color-text-primary);
+  --popover: var(--color-bg-surface);
+  --popover-foreground: var(--color-text-primary);
+  --primary: var(--color-brand-accent);
+  --primary-foreground: var(--color-text-accent-btn);
+  --secondary: var(--color-bg-surface);
+  --secondary-foreground: var(--color-text-secondary);
+  --muted: var(--color-text-caption);
+  --muted-foreground: var(--color-text-caption);
+  --accent: var(--color-brand-highlight);
+  --accent-foreground: var(--color-brand-accent);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: var(--color-border-default);
+  --input: var(--color-border-default);
+  --ring: var(--color-brand-accent);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.75rem;
+  --sidebar: var(--color-bg-surface);
+  --sidebar-foreground: var(--color-text-primary);
+  --sidebar-primary: var(--color-brand-accent);
+  --sidebar-primary-foreground: var(--color-text-accent-btn);
+  --sidebar-accent: var(--color-brand-highlight);
+  --sidebar-accent-foreground: var(--color-brand-accent);
+  --sidebar-border: var(--color-border-default);
+  --sidebar-ring: var(--color-brand-accent);
+}
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+/* 🌙 Connect Shadcn Tokens directly to your Custom Dark Theme Variables */
+[data-theme="dark"], .dark {
+  --background: var(--color-bg-main);
+  --foreground: var(--color-text-primary);
+  --card: var(--color-bg-surface);
+  --card-foreground: var(--color-text-primary);
+  --popover: var(--color-bg-surface);
+  --popover-foreground: var(--color-text-primary);
+  --primary: var(--color-brand-accent);
+  --primary-foreground: var(--color-text-accent-btn);
+  --secondary: var(--color-bg-surface);
+  --secondary-foreground: var(--color-text-secondary);
+  --muted: var(--color-text-caption);
+  --muted-foreground: var(--color-text-caption);
+  --accent: var(--color-brand-highlight);
+  --accent-foreground: var(--color-brand-accent);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: var(--color-border-default);
+  --input: var(--color-border-default);
+  --ring: var(--color-brand-accent);
+  --sidebar: var(--color-bg-surface);
+  --sidebar-foreground: var(--color-text-primary);
+  --sidebar-primary: var(--color-brand-accent);
+  --sidebar-primary-foreground: var(--color-text-accent-btn);
+  --sidebar-accent: var(--color-brand-highlight);
+  --sidebar-accent-foreground: var(--color-brand-accent);
+  --sidebar-border: var(--color-border-default);
+  --sidebar-ring: var(--color-brand-accent);
+}
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  body {
+    font-family: 'Lexend Variable', sans-serif;
+    @apply bg-background text-foreground;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+  html {
+    @apply font-sans;
   }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-}
-
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
 }

@@ -1,0 +1,16 @@
+deployment:
+  tasks:
+    # Navigate into the 'server' subdirectory where your backend lives
+    - cd /home/username/repositories/zyroo.colleges/server
+    
+    # Install production dependencies (skip dev dependencies)
+    - /usr/bin/npm install --production
+    
+    # Generate the Prisma Client
+    - /usr/bin/npx prisma generate
+    
+    # Build the NestJS application
+    - /usr/bin/npm run build
+    
+    # (Optional) Run Prisma migrations if you have them - uncomment if needed
+    # - /usr/bin/npx prisma migrate deploy
