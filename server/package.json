@@ -18,12 +18,15 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "postinstall": "echo 'Skipping prisma generate'",
-    "prisma:generate": "PRISMA_CLI_QUERY_ENGINE_TYPE=binary npx prisma generate",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "seed": "tsx scripts/seed.ts",
+    "seed:assessment": "tsx scripts/assessment.seed.ts",
+    "seed:blog": "tsx scripts/blog.seed.ts",
+    "seed:entrance": "tsx scripts/entrance.seed.ts",
+    "seed:all": "npm run seed && npm run seed:blog && npm run seed:entrance && npm run seed:assessment"
   },
   "dependencies": {
     "@getbrevo/brevo": "^6.0.3",
