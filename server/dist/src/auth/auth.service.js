@@ -41,35 +41,44 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const bcrypt = __importStar(require("bcrypt"));
-const prisma_service_1 = require("../prisma/prisma.service");
+const drizzle_orm_1 = require("drizzle-orm");
+const db_provider_1 = require("../db/db.provider");
+const schema_1 = require("../db/schema");
 let AuthService = class AuthService {
-    prisma;
+    db;
     jwtService;
-    constructor(prisma, jwtService) {
-        this.prisma = prisma;
+    constructor(db, jwtService) {
+        this.db = db;
         this.jwtService = jwtService;
     }
     async signup(dto) {
-        const existingUser = await this.prisma.user.findUnique({
-            where: { email: dto.email },
-        });
-        if (existingUser) {
+        const existing = await this.db
+            .select()
+            .from(schema_1.users)
+            .where((0, drizzle_orm_1.eq)(schema_1.users.email, dto.email));
+        if (existing.length > 0) {
             throw new common_1.ConflictException('An account with this email address already exists');
         }
         const hashedPassword = await bcrypt.hash(dto.password, 10);
-        const user = await this.prisma.user.create({
-            data: {
-                name: dto.name,
-                email: dto.email,
-                password: hashedPassword,
-                role: dto.role,
-            },
+        await this.db.insert(schema_1.users).values({
+            name: dto.name,
+            email: dto.email,
+            password: hashedPassword,
+            role: dto.role,
+            picture: dto.picture || null,
         });
+        const [user] = await this.db
+            .select()
+            .from(schema_1.users)
+            .where((0, drizzle_orm_1.eq)(schema_1.users.email, dto.email));
         const token = this.generateToken(user.id, user.email, false);
         return {
             message: 'Account created successfully',
@@ -84,9 +93,10 @@ let AuthService = class AuthService {
         };
     }
     async login(dto) {
-        const user = await this.prisma.user.findUnique({
-            where: { email: dto.email },
-        });
+        const [user] = await this.db
+            .select()
+            .from(schema_1.users)
+            .where((0, drizzle_orm_1.eq)(schema_1.users.email, dto.email));
         if (!user) {
             throw new common_1.UnauthorizedException('Invalid email or password');
         }
@@ -115,24 +125,31 @@ let AuthService = class AuthService {
             throw new common_1.UnauthorizedException('Google authentication failed: Missing profile data');
         }
         try {
-            let user = await this.prisma.user.findUnique({
-                where: { email: googleUser.email },
-            });
+            let [user] = await this.db
+                .select()
+                .from(schema_1.users)
+                .where((0, drizzle_orm_1.eq)(schema_1.users.email, googleUser.email));
             if (!user) {
-                user = await this.prisma.user.create({
-                    data: {
-                        email: googleUser.email,
-                        name: googleUser.name || 'Google User',
-                        picture: googleUser.picture || null,
-                        role: 'STUDENT',
-                    },
+                await this.db.insert(schema_1.users).values({
+                    email: googleUser.email,
+                    name: googleUser.name || 'Google User',
+                    picture: googleUser.picture || null,
+                    role: 'STUDENT',
                 });
+                [user] = await this.db
+                    .select()
+                    .from(schema_1.users)
+                    .where((0, drizzle_orm_1.eq)(schema_1.users.email, googleUser.email));
             }
             else if (googleUser.picture && user.picture !== googleUser.picture) {
-                user = await this.prisma.user.update({
-                    where: { id: user.id },
-                    data: { picture: googleUser.picture },
-                });
+                await this.db
+                    .update(schema_1.users)
+                    .set({ picture: googleUser.picture })
+                    .where((0, drizzle_orm_1.eq)(schema_1.users.id, user.id));
+                [user] = await this.db
+                    .select()
+                    .from(schema_1.users)
+                    .where((0, drizzle_orm_1.eq)(schema_1.users.id, user.id));
             }
             const token = this.generateToken(user.id, user.email, true);
             return {
@@ -161,7 +178,7 @@ let AuthService = class AuthService {
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        jwt_1.JwtService])
+    __param(0, (0, common_1.Inject)(db_provider_1.DRIZZLE)),
+    __metadata("design:paramtypes", [Function, jwt_1.JwtService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

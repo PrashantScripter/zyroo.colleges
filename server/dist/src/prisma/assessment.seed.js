@@ -1,14 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
-const client_1 = require("../generated/prisma/client");
-const adapter_mariadb_1 = require("@prisma/adapter-mariadb");
+const promise_1 = require("mysql2/promise");
+const mysql2_1 = require("drizzle-orm/mysql2");
+const schema_1 = require("../db/schema");
 const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) {
     throw new Error('DATABASE_URL environment variable is not set');
 }
-const adapter = new adapter_mariadb_1.PrismaMariaDb(dbUrl);
-const prisma = new client_1.PrismaClient({ adapter });
+const pool = (0, promise_1.createPool)({ uri: dbUrl });
+const db = (0, mysql2_1.drizzle)(pool);
 const COLLEGES_DATA = [
     {
         id: 1,
@@ -98,7 +99,6 @@ const COLLEGES_DATA = [
 ];
 const ASSESSMENT_QUESTIONS_DATA = [
     {
-        id: 101,
         collegeId: 1,
         text: 'What is the time complexity of searching for an element in a balanced Binary Search Tree (BST)?',
         options: ['O(1)', 'O(n)', 'O(log n)', 'O(n log n)'],
@@ -106,7 +106,6 @@ const ASSESSMENT_QUESTIONS_DATA = [
         explanation: 'A balanced BST cuts the search space in half with each comparison, resulting in logarithmic time complexity.',
     },
     {
-        id: 102,
         collegeId: 1,
         text: 'Which HTTP status code represents an Internal Server Error?',
         options: [
@@ -119,7 +118,6 @@ const ASSESSMENT_QUESTIONS_DATA = [
         explanation: 'The 5xx series status codes represent server-side errors.',
     },
     {
-        id: 103,
         collegeId: 1,
         text: 'In React, what hook would you use to optimize performance by memoizing a computed value across renders?',
         options: ['useEffect', 'useMemo', 'useCallback', 'useState'],
@@ -127,7 +125,6 @@ const ASSESSMENT_QUESTIONS_DATA = [
         explanation: 'useMemo caches the result of a calculation between renders.',
     },
     {
-        id: 301,
         collegeId: 3,
         text: 'Which scheduling algorithm can cause the problem of starvation?',
         options: [
@@ -140,7 +137,6 @@ const ASSESSMENT_QUESTIONS_DATA = [
         explanation: 'Priority scheduling allows low-priority tasks to wait indefinitely if higher priority tasks keep coming.',
     },
     {
-        id: 302,
         collegeId: 3,
         text: 'What is the primary role of an Indexing structural framework in PostgreSQL queries?',
         options: [
@@ -153,7 +149,6 @@ const ASSESSMENT_QUESTIONS_DATA = [
         explanation: 'Indexes allow fast lookup without scanning every row in a table.',
     },
     {
-        id: 501,
         collegeId: 5,
         text: 'Which layer of the OSI model handles logical network addressing and routing?',
         options: [
@@ -166,7 +161,6 @@ const ASSESSMENT_QUESTIONS_DATA = [
         explanation: 'The Network layer is responsible for logical addressing (IP) and routing.',
     },
     {
-        id: 701,
         collegeId: 7,
         text: 'Which framework is primarily used to analyze the competitive environment of an industry?',
         options: [
@@ -180,15 +174,20 @@ const ASSESSMENT_QUESTIONS_DATA = [
     },
 ];
 async function main() {
-    await prisma.assessmentQuestion.deleteMany();
-    await prisma.college.deleteMany();
-    await prisma.college.createMany({ data: COLLEGES_DATA });
-    await prisma.assessmentQuestion.createMany({
-        data: ASSESSMENT_QUESTIONS_DATA,
-    });
-    console.log('Assessment data seeded successfully');
+    console.log('🧹 Cleaning up existing assessment data...');
+    await db.delete(schema_1.assessmentQuestions);
+    await db.delete(schema_1.colleges);
+    console.log('✅ Cleared existing data.');
+    console.log('🌱 Seeding assessment colleges and questions...');
+    for (const college of COLLEGES_DATA) {
+        await db.insert(schema_1.colleges).values(college);
+    }
+    await db.insert(schema_1.assessmentQuestions).values(ASSESSMENT_QUESTIONS_DATA);
+    console.log('✅ Assessment data seeded successfully.');
+    process.exit(0);
 }
-main()
-    .catch((e) => console.error(e))
-    .finally(async () => await prisma.$disconnect());
+main().catch((e) => {
+    console.error('❌ Seeding failed:', e);
+    process.exit(1);
+});
 //# sourceMappingURL=assessment.seed.js.map

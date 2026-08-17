@@ -1,14 +1,16 @@
+// scripts/blog.seed.ts
 import 'dotenv/config';
-import { PrismaClient } from '../generated/prisma/client';
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { createPool } from 'mysql2/promise';
+import { drizzle } from 'drizzle-orm/mysql2';
+import { blogs } from 'src/db/schema';
 
 const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) {
   throw new Error('DATABASE_URL environment variable is not set');
 }
 
-const adapter = new PrismaMariaDb(dbUrl);
-const prisma = new PrismaClient({ adapter });
+const pool = createPool({ uri: dbUrl });
+const db = drizzle(pool);
 
 const BLOGS_DATA = [
   {
@@ -17,7 +19,7 @@ const BLOGS_DATA = [
       'The Indian Institute of Technology Bombay has opened applications for its prestigious MTech programs. Eligible candidates must have valid GATE scores...',
     content: `
       <p>The Indian Institute of Technology Bombay (IITB) has officially opened applications for its Master of Technology (MTech) programs for the 2026 academic session. Aspiring candidates can now apply online through the official admissions portal.</p>
-      <p><strong>Eligibility:</strong> Candidates must hold a Bachelor’s degree in Engineering/Technology or a Master’s degree in Science with a valid GATE score. The application window closes on March 31, 2026.</p>
+      <p><strong>Eligibility:</strong> Candidates must hold a Bachelor's degree in Engineering/Technology or a Master's degree in Science with a valid GATE score. The application window closes on March 31, 2026.</p>
       <p>IIT Bombay offers specializations in Computer Science, Electrical Engineering, Mechanical Engineering, and several interdisciplinary fields. The institute is known for its world-class faculty, research facilities, and strong industry connections.</p>
       <p>For more details, visit the official admissions website.</p>
     `,
@@ -72,20 +74,17 @@ const BLOGS_DATA = [
 ];
 
 async function main() {
-  // Clear existing blogs (optional, but ensures clean state)
-  await prisma.blog.deleteMany();
-  console.log('🧹 Cleared existing blogs.');
+  console.log('🧹 Clearing existing blogs...');
+  await db.delete(blogs);
+  console.log('✅ Cleared existing blogs.');
 
-  // Insert new blog data
-  const result = await prisma.blog.createMany({ data: BLOGS_DATA });
-  console.log(`✅ Seeded ${result.count} blog posts successfully.`);
+  console.log('🌱 Seeding blogs...');
+  await db.insert(blogs).values(BLOGS_DATA);
+  console.log(`✅ Seeded ${BLOGS_DATA.length} blog posts successfully.`);
+  process.exit(0);
 }
 
-main()
-  .catch((e) => {
-    console.error('❌ Seeding failed:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().catch((e) => {
+  console.error('❌ Seeding failed:', e);
+  process.exit(1);
+});

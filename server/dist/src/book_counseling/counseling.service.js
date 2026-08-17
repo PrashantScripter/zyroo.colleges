@@ -8,19 +8,23 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CounselingService = void 0;
 const common_1 = require("@nestjs/common");
-const prisma_service_1 = require("../prisma/prisma.service");
+const db_provider_1 = require("../db/db.provider");
+const schema_1 = require("../db/schema");
 const axios_1 = __importDefault(require("axios"));
 let CounselingService = class CounselingService {
-    prisma;
+    db;
     brevoApiKey;
-    constructor(prisma) {
-        this.prisma = prisma;
+    constructor(db) {
+        this.db = db;
         const apiKey = process.env.BREVO_API_KEY;
         if (!apiKey) {
             throw new Error('BREVO_API_KEY is not defined in environment variables');
@@ -29,25 +33,26 @@ let CounselingService = class CounselingService {
     }
     async bookSession(dto) {
         try {
-            const booking = await this.prisma.counselingBooking.create({
-                data: {
-                    name: dto.name,
-                    phone: dto.phone,
-                    email: dto.email,
-                    targetCollege: dto.targetCollege,
-                    stream: dto.stream,
-                    preferredDate: new Date(dto.preferredDate),
-                    preferredTime: dto.preferredTime,
-                    concerns: dto.concerns,
-                    userId: dto.userId,
-                },
-            });
+            const [insertedId] = await this.db
+                .insert(schema_1.counselingBookings)
+                .values({
+                name: dto.name,
+                phone: dto.phone,
+                email: dto.email,
+                targetCollege: dto.targetCollege,
+                stream: dto.stream,
+                preferredDate: new Date(dto.preferredDate),
+                preferredTime: dto.preferredTime,
+                concerns: dto.concerns || null,
+                userId: dto.userId || null,
+            })
+                .$returningId();
             await this.sendConfirmationEmail(dto);
             await this.sendAdminNotification(dto);
             return {
                 success: true,
                 message: 'Counseling session booked successfully. We have sent you a confirmation email.',
-                bookingId: booking.id,
+                bookingId: insertedId,
             };
         }
         catch (error) {
@@ -114,6 +119,7 @@ let CounselingService = class CounselingService {
 exports.CounselingService = CounselingService;
 exports.CounselingService = CounselingService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __param(0, (0, common_1.Inject)(db_provider_1.DRIZZLE)),
+    __metadata("design:paramtypes", [Function])
 ], CounselingService);
 //# sourceMappingURL=counseling.service.js.map

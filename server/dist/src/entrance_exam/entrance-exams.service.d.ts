@@ -1,9 +1,8 @@
-import { PrismaService } from '../prisma/prisma.service';
+import type { MySql2Database } from 'drizzle-orm/mysql2';
 import { GetEntranceExamsDto } from './dto/get-entrance-exams.dto';
-import { ExamStatus } from '../generated/prisma/client';
 export declare class EntranceExamsService {
-    private readonly prisma;
-    constructor(prisma: PrismaService);
+    private db;
+    constructor(db: MySql2Database<typeof import('../db/schema')>);
     findAll(queryDto: GetEntranceExamsDto): Promise<{
         timeline: {
             registration: string;
@@ -11,12 +10,12 @@ export declare class EntranceExamsService {
         };
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
+        createdAt: Date | null;
+        mode: string;
+        updatedAt: Date | null;
         stream: string;
         conductingBody: string;
-        mode: string;
-        status: ExamStatus;
+        status: "open" | "upcoming" | "closed";
         eligibility: string;
         targetColleges: string;
     }[]>;
@@ -27,12 +26,12 @@ export declare class EntranceExamsService {
         };
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
+        createdAt: Date | null;
+        mode: string;
+        updatedAt: Date | null;
         stream: string;
         conductingBody: string;
-        mode: string;
-        status: ExamStatus;
+        status: "open" | "upcoming" | "closed";
         eligibility: string;
         targetColleges: string;
     }>;

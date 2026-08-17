@@ -4,7 +4,22 @@ export declare class BlogsController {
     private readonly blogsService;
     constructor(blogsService: BlogsService);
     findAll(query: GetBlogsQueryDto): Promise<{
-        data: unknown;
+        data: {
+            id: number;
+            title: string;
+            description: string;
+            content: string | null;
+            image: string;
+            category: string;
+            author: string;
+            authorType: string;
+            tags: string[];
+            likes: number;
+            views: number;
+            publishedAt: Date | null;
+            createdAt: Date | null;
+            updatedAt: Date | null;
+        }[];
         meta: {
             total: number;
             page: number;
@@ -14,18 +29,18 @@ export declare class BlogsController {
     }>;
     findOne(id: number): Promise<{
         id: number;
-        createdAt: Date;
-        updatedAt: Date;
-        category: string;
-        image: string;
         title: string;
         description: string;
         content: string | null;
+        image: string;
+        category: string;
         author: string;
         authorType: string;
-        tags: import("@prisma/client/runtime/client").JsonValue;
+        tags: string[];
         likes: number;
         views: number;
-        publishedAt: Date;
+        publishedAt: Date | null;
+        createdAt: Date | null;
+        updatedAt: Date | null;
     }>;
 }

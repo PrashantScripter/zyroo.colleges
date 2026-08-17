@@ -10,13 +10,12 @@ exports.EntranceExamsModule = void 0;
 const common_1 = require("@nestjs/common");
 const entrance_exams_controller_1 = require("./entrance-exams.controller");
 const entrance_exams_service_1 = require("./entrance-exams.service");
-const prisma_module_1 = require("../prisma/prisma.module");
 let EntranceExamsModule = class EntranceExamsModule {
 };
 exports.EntranceExamsModule = EntranceExamsModule;
 exports.EntranceExamsModule = EntranceExamsModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule],
+        imports: [],
         controllers: [entrance_exams_controller_1.EntranceExamsController],
         providers: [entrance_exams_service_1.EntranceExamsService],
         exports: [entrance_exams_service_1.EntranceExamsService],

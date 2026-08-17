@@ -1,13 +1,15 @@
-import { PrismaService } from '../prisma/prisma.service';
+import type { MySql2Database } from 'drizzle-orm/mysql2';
 import { BookCounselingDto } from './dto/book-counseling.dto';
 export declare class CounselingService {
-    private prisma;
+    private db;
     private brevoApiKey;
-    constructor(prisma: PrismaService);
+    constructor(db: MySql2Database<typeof import('../db/schema')>);
     bookSession(dto: BookCounselingDto): Promise<{
         success: boolean;
         message: string;
-        bookingId: number;
+        bookingId: {
+            id: number;
+        };
     }>;
     private sendEmail;
     private sendConfirmationEmail;

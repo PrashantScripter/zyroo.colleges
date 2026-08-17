@@ -4,30 +4,10 @@ export declare class CollegesController {
     private readonly collegesService;
     constructor(collegesService: CollegesService);
     findAll(query: GetCollegesQueryDto): Promise<{
-        data: ({
-            courses: {
-                id: number;
-                name: string;
-                createdAt: Date;
-                updatedAt: Date;
-                collegeId: number;
-                key: string;
-                fees: number;
-                hostelFees: number;
-                avgPackage: number;
-                medianPackage: number;
-                highestPackage: number;
-                placementRate: number;
-                cutoff: string;
-                acceptedExams: string;
-                duration: string;
-                seats: number;
-            }[];
-        } & {
+        data: {
+            courses: any[];
             id: number;
             name: string;
-            createdAt: Date;
-            updatedAt: Date;
             location: string;
             stream: string;
             category: string;
@@ -43,8 +23,10 @@ export declare class CollegesController {
             ratingPlacements: number | null;
             ratingInfrastructure: number | null;
             ratingCampusLife: number | null;
-            facilities: import("@prisma/client/runtime/client").JsonValue | null;
-        })[];
+            facilities: string[] | null;
+            createdAt: Date | null;
+            updatedAt: Date | null;
+        }[];
         meta: {
             total: number;
             page: number;
@@ -55,11 +37,9 @@ export declare class CollegesController {
     findOne(id: number): Promise<{
         courses: {
             id: number;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
             collegeId: number;
             key: string;
+            name: string;
             fees: number;
             hostelFees: number;
             avgPackage: number;
@@ -70,12 +50,11 @@ export declare class CollegesController {
             acceptedExams: string;
             duration: string;
             seats: number;
+            createdAt: Date | null;
+            updatedAt: Date | null;
         }[];
-    } & {
         id: number;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
         location: string;
         stream: string;
         category: string;
@@ -91,6 +70,8 @@ export declare class CollegesController {
         ratingPlacements: number | null;
         ratingInfrastructure: number | null;
         ratingCampusLife: number | null;
-        facilities: import("@prisma/client/runtime/client").JsonValue | null;
+        facilities: string[] | null;
+        createdAt: Date | null;
+        updatedAt: Date | null;
     }>;
 }

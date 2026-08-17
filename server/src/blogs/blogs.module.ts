@@ -1,10 +1,10 @@
+// src/blogs/blogs.module.ts
 import { Module } from '@nestjs/common';
 import { BlogsController } from './blogs.controller';
 import { BlogsService } from './blogs.service';
-import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [], // DbModule is global, no need to import
   controllers: [BlogsController],
   providers: [BlogsService],
   exports: [BlogsService],

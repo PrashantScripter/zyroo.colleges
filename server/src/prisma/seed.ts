@@ -1,14 +1,16 @@
+// src/prisma/seed.ts → rename/move to src/db/seed.ts or scripts/seed.ts
 import 'dotenv/config';
-import { PrismaClient } from '../generated/prisma/client';
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { createPool, Pool } from 'mysql2/promise';
+import { drizzle } from 'drizzle-orm/mysql2';
+import { colleges, courses } from '../db/schema';
 
 const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) {
   throw new Error('DATABASE_URL environment variable is not set');
 }
 
-const adapter = new PrismaMariaDb(dbUrl);
-const prisma = new PrismaClient({ adapter });
+const pool: Pool = createPool({ uri: dbUrl });
+const db = drizzle(pool);
 
 const COLLEGES_DATA = [
   {
@@ -224,32 +226,42 @@ const COLLEGES_DATA = [
 ];
 
 async function main() {
-  console.log('Cleaning up existing college and course data...');
-  await prisma.course.deleteMany();
-  await prisma.college.deleteMany();
+  console.log('🧹 Cleaning up existing college and course data...');
 
-  console.log('Seeding updated college and course records...');
+  // Delete all courses first (foreign key constraint)
+  await db.delete(courses);
+  await db.delete(colleges);
+  console.log('✅ Cleared existing data.');
+
+  console.log('🌱 Seeding colleges and courses...');
   for (const collegeItem of COLLEGES_DATA) {
-    const { courses, ...collegeData } = collegeItem;
+    const { courses: courseData, ...collegeData } = collegeItem;
 
-    await prisma.college.create({
-      data: {
-        ...collegeData,
-        courses: {
-          create: courses,
-        },
-      },
-    });
+    // Insert the college
+    const [insertedCollege] = await db
+      .insert(colleges)
+      .values(collegeData)
+      .$returningId();
+
+    // Extract the numeric ID
+    const collegeId = insertedCollege.id;
+
+    // Insert courses linked to this college
+    if (courseData.length > 0) {
+      await db.insert(courses).values(
+        courseData.map((course) => ({
+          ...course,
+          collegeId: collegeId,
+        })),
+      );
+    }
   }
 
-  console.log('Colleges and relational courses seeded successfully.');
+  console.log('✅ Colleges and relational courses seeded successfully.');
+  process.exit(0);
 }
 
-main()
-  .catch((e) => {
-    console.error('Error seeding database:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().catch((e) => {
+  console.error('❌ Error seeding database:', e);
+  process.exit(1);
+});

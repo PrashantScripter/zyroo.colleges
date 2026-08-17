@@ -1,14 +1,16 @@
+// scripts/entrance.seed.ts
 import 'dotenv/config';
-import { PrismaClient, ExamStatus } from '../generated/prisma/client';
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { createPool } from 'mysql2/promise';
+import { drizzle } from 'drizzle-orm/mysql2';
+import { entranceExams } from 'src/db/schema';
 
 const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) {
   throw new Error('DATABASE_URL environment variable is not set');
 }
 
-const adapter = new PrismaMariaDb(dbUrl);
-const prisma = new PrismaClient({ adapter });
+const pool = createPool({ uri: dbUrl });
+const db = drizzle(pool);
 
 const ENTRANCE_EXAMS_DATA = [
   {
@@ -17,7 +19,7 @@ const ENTRANCE_EXAMS_DATA = [
     stream: 'engineering',
     conductingBody: 'National Testing Agency (NTA)',
     mode: 'Online (Computer Based Test)',
-    status: ExamStatus.open,
+    status: 'open' as const,
     registrationTimeline: 'Nov 2025 - Dec 2025',
     examDatesTimeline: 'Jan 24 - Feb 01, 2026',
     eligibility:
@@ -31,7 +33,7 @@ const ENTRANCE_EXAMS_DATA = [
     stream: 'medical',
     conductingBody: 'National Testing Agency (NTA)',
     mode: 'Offline (Pen and Paper)',
-    status: ExamStatus.upcoming,
+    status: 'upcoming' as const,
     registrationTimeline: 'Feb 2026 - Mar 2026',
     examDatesTimeline: 'May 03, 2026',
     eligibility:
@@ -45,7 +47,7 @@ const ENTRANCE_EXAMS_DATA = [
     stream: 'management',
     conductingBody: 'Indian Institutes of Management (IIMs)',
     mode: 'Online (Computer Based Test)',
-    status: ExamStatus.upcoming,
+    status: 'upcoming' as const,
     registrationTimeline: 'Aug 2026 - Sep 2026',
     examDatesTimeline: 'Nov 29, 2026',
     eligibility:
@@ -59,7 +61,7 @@ const ENTRANCE_EXAMS_DATA = [
     stream: 'engineering',
     conductingBody: 'IITs / IISc Bangalore',
     mode: 'Online (Computer Based Test)',
-    status: ExamStatus.closed,
+    status: 'closed' as const,
     registrationTimeline: 'Aug 2025 - Oct 2025',
     examDatesTimeline: 'Feb 07 - Feb 15, 2026',
     eligibility:
@@ -73,7 +75,7 @@ const ENTRANCE_EXAMS_DATA = [
     stream: 'engineering',
     conductingBody: 'BITS Pilani',
     mode: 'Online (Computer Based Test)',
-    status: ExamStatus.open,
+    status: 'open' as const,
     registrationTimeline: 'Jan 2026 - Apr 2026',
     examDatesTimeline: 'Session 1: May 2026 | Session 2: Jun 2026',
     eligibility:
@@ -86,7 +88,7 @@ const ENTRANCE_EXAMS_DATA = [
     stream: 'general',
     conductingBody: 'National Testing Agency (NTA)',
     mode: 'Hybrid (CBT & Pen-Paper)',
-    status: ExamStatus.upcoming,
+    status: 'upcoming' as const,
     registrationTimeline: 'Feb 2026 - Mar 2026',
     examDatesTimeline: 'May 15 - May 31, 2026',
     eligibility:
@@ -97,11 +99,17 @@ const ENTRANCE_EXAMS_DATA = [
 ];
 
 async function main() {
-  await prisma.entranceExam.deleteMany();
-  await prisma.entranceExam.createMany({ data: ENTRANCE_EXAMS_DATA });
-  console.log('Entrance exams seeded successfully');
+  console.log('🧹 Clearing existing entrance exams...');
+  await db.delete(entranceExams);
+  console.log('✅ Cleared existing data.');
+
+  console.log('🌱 Seeding entrance exams...');
+  await db.insert(entranceExams).values(ENTRANCE_EXAMS_DATA);
+  console.log(`✅ Seeded ${ENTRANCE_EXAMS_DATA.length} entrance exams.`);
+  process.exit(0);
 }
 
-main()
-  .catch((e) => console.error(e))
-  .finally(async () => await prisma.$disconnect());
+main().catch((e) => {
+  console.error('❌ Seeding failed:', e);
+  process.exit(1);
+});

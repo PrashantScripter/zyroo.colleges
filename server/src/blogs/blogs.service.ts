@@ -1,12 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+// src/blogs/blogs.service.ts
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { eq, desc, asc, and, sql, SQL } from 'drizzle-orm';
+import { DRIZZLE } from '../db/db.provider';
+import { blogs } from '../db/schema';
+import type { MySql2Database } from 'drizzle-orm/mysql2';
 import { GetBlogsQueryDto } from './dto/get-blogs-query.dto';
 import { CreateBlogDto } from './dto/create-blog.dto';
-import { Prisma } from '../generated/prisma/client';
 
 @Injectable()
 export class BlogsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(DRIZZLE) private db: MySql2Database<typeof import('../db/schema')>,
+  ) {}
 
   async findAll(query: GetBlogsQueryDto) {
     const {
@@ -20,67 +25,68 @@ export class BlogsService {
       limit = 10,
     } = query;
 
-    // Build SQL WHERE clauses
-    const whereClauses: string[] = [];
-    const params: any[] = [];
-    let paramIndex = 1;
+    // Build dynamic WHERE conditions
+    const whereConditions: (SQL | undefined)[] = [];
 
     if (search && search.trim()) {
       const term = `%${search.trim()}%`;
-      whereClauses.push(
-        `(title LIKE $${paramIndex} OR description LIKE $${paramIndex})`,
+      whereConditions.push(
+        sql`(title LIKE ${term} OR description LIKE ${term})`,
       );
-      params.push(term);
-      paramIndex++;
     }
 
     if (category) {
-      whereClauses.push(`category = $${paramIndex}`);
-      params.push(category);
-      paramIndex++;
+      whereConditions.push(eq(blogs.category, category));
     }
 
     if (author) {
-      whereClauses.push(`author = $${paramIndex}`);
-      params.push(author);
-      paramIndex++;
+      whereConditions.push(eq(blogs.author, author));
     }
 
     if (tag) {
-      // MySQL JSON_CONTAINS to check if tag exists in JSON array
-      whereClauses.push(`JSON_CONTAINS(tags, JSON_QUOTE($${paramIndex}))`);
-      params.push(tag);
-      paramIndex++;
+      // Use JSON_CONTAINS with raw SQL
+      whereConditions.push(sql`JSON_CONTAINS(tags, JSON_QUOTE(${tag}))`);
     }
 
-    const whereSQL =
-      whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-    const orderSQL = `ORDER BY ${sortBy} ${order.toUpperCase()}`;
-    const offset = (page - 1) * limit;
+    // Build the final WHERE clause
+    const whereClause =
+      whereConditions.length > 0 ? and(...whereConditions) : undefined;
 
-    // Build raw SQL queries
-    const querySQL = Prisma.sql`
-      SELECT * FROM blogs
-      ${Prisma.raw(whereSQL)}
-      ${Prisma.raw(orderSQL)}
-      LIMIT ${limit} OFFSET ${offset}
-    `;
+    // Count total records (with the same filters)
+    const countQuery = this.db
+      .select({ total: sql<number>`count(*)` })
+      .from(blogs)
+      .$dynamic();
 
-    const countSQL = Prisma.sql`
-      SELECT COUNT(*) as total FROM blogs
-      ${Prisma.raw(whereSQL)}
-    `;
+    if (whereClause) {
+      countQuery.where(whereClause);
+    }
 
-    // Execute both queries in a transaction
-    const [blogs, countResult] = await this.prisma.$transaction([
-      this.prisma.$queryRaw(querySQL),
-      this.prisma.$queryRaw(countSQL),
-    ]);
+    const [countResult] = await countQuery;
+    const total = Number(countResult?.total) || 0;
 
-    const total = Number((countResult as any)[0]?.total || 0);
+    // Main query with sorting and pagination
+    const orderFn = order === 'asc' ? asc : desc;
+    const orderByCol =
+      sortBy === 'publishedAt'
+        ? blogs.publishedAt
+        : sortBy === 'likes'
+          ? blogs.likes
+          : blogs.views;
+
+    const dataQuery = this.db.select().from(blogs).$dynamic();
+
+    if (whereClause) {
+      dataQuery.where(whereClause);
+    }
+
+    const blogsResult = await dataQuery
+      .orderBy(orderFn(orderByCol))
+      .limit(limit)
+      .offset((page - 1) * limit);
 
     return {
-      data: blogs,
+      data: blogsResult,
       meta: {
         total,
         page,
@@ -91,36 +97,50 @@ export class BlogsService {
   }
 
   async findOne(id: number) {
-    const blog = await this.prisma.blog.findUnique({ where: { id } });
-    if (!blog) {
+    const result = await this.db.select().from(blogs).where(eq(blogs.id, id));
+
+    if (result.length === 0) {
       throw new NotFoundException(`Blog with ID ${id} not found`);
     }
-    return blog;
+    return result[0];
   }
 
   async incrementViews(id: number) {
-    return this.prisma.blog.update({
-      where: { id },
-      data: { views: { increment: 1 } },
-    });
+    await this.db
+      .update(blogs)
+      .set({ views: sql`views + 1` })
+      .where(eq(blogs.id, id));
+
+    // Return the updated blog
+    const [updated] = await this.db
+      .select()
+      .from(blogs)
+      .where(eq(blogs.id, id));
+    return updated;
   }
 
-  // Admin create
   async create(data: CreateBlogDto) {
-    return this.prisma.blog.create({
-      data: {
-        title: data.title,
-        description: data.description,
-        content: data.content,
-        image: data.image,
-        category: data.category,
-        author: data.author,
-        authorType: data.authorType,
-        tags: data.tags,
-        likes: data.likes ?? 0,
-        views: data.views ?? 0,
-        publishedAt: data.publishedAt ?? new Date(),
-      },
+    await this.db.insert(blogs).values({
+      title: data.title,
+      description: data.description,
+      content: data.content,
+      image: data.image,
+      category: data.category,
+      author: data.author,
+      authorType: data.authorType,
+      tags: data.tags,
+      likes: data.likes ?? 0,
+      views: data.views ?? 0,
+      publishedAt: data.publishedAt ?? new Date(),
     });
+
+    // Fetch the newly created blog (optional)
+    const [newBlog] = await this.db
+      .select()
+      .from(blogs)
+      .where(eq(blogs.title, data.title))
+      .orderBy(desc(blogs.createdAt))
+      .limit(1);
+    return newBlog;
   }
 }

@@ -8,119 +8,152 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CollegesService = void 0;
 const common_1 = require("@nestjs/common");
-const prisma_service_1 = require("../prisma/prisma.service");
+const drizzle_orm_1 = require("drizzle-orm");
+const db_provider_1 = require("../db/db.provider");
+const schema_1 = require("../db/schema");
 let CollegesService = class CollegesService {
-    prisma;
-    constructor(prisma) {
-        this.prisma = prisma;
+    db;
+    constructor(db) {
+        this.db = db;
     }
     async findAll(query) {
         const { search, stream, category, state, city, courseKey, maxFees, minAvgPackage, rankTier, naacGrade, minRating, sortBy = 'nirf', page = 1, limit = 10, } = query;
-        const where = {};
+        const whereConditions = [];
         if (search && search.trim() !== '') {
-            const searchTerm = search.trim();
-            where.OR = [
-                { name: { contains: searchTerm } },
-                { location: { contains: searchTerm } },
-            ];
+            const term = `%${search.trim()}%`;
+            whereConditions.push((0, drizzle_orm_1.sql) `(name LIKE ${term} OR location LIKE ${term})`);
         }
         if (stream && stream !== 'all') {
-            where.stream = { equals: stream };
+            whereConditions.push((0, drizzle_orm_1.eq)(schema_1.colleges.stream, stream));
         }
         if (category && category !== 'all') {
-            where.category = { equals: category };
+            whereConditions.push((0, drizzle_orm_1.eq)(schema_1.colleges.category, category));
         }
         if (state && state !== 'all') {
-            where.location = { contains: state };
+            whereConditions.push((0, drizzle_orm_1.like)(schema_1.colleges.location, `%${state}%`));
         }
         if (city && city !== 'all') {
-            where.location = {
-                ...(typeof where.location === 'object' ? where.location : {}),
-                contains: city,
-            };
+            whereConditions.push((0, drizzle_orm_1.like)(schema_1.colleges.location, `%${city}%`));
         }
         if (maxFees !== undefined && !isNaN(maxFees)) {
-            where.annualFees = { lte: maxFees };
+            whereConditions.push((0, drizzle_orm_1.lte)(schema_1.colleges.annualFees, maxFees));
         }
         if (minRating !== undefined && !isNaN(minRating)) {
-            where.rating = { gte: minRating };
+            whereConditions.push((0, drizzle_orm_1.gte)(schema_1.colleges.rating, minRating));
         }
         if (rankTier && rankTier !== 'all') {
-            if (rankTier === 'top10')
-                where.nirfRank = { lte: 10 };
-            else if (rankTier === 'top30')
-                where.nirfRank = { lte: 30 };
-            else if (rankTier === 'top100')
-                where.nirfRank = { lte: 100 };
+            if (rankTier === 'top10') {
+                whereConditions.push((0, drizzle_orm_1.lte)(schema_1.colleges.nirfRank, 10));
+            }
+            else if (rankTier === 'top30') {
+                whereConditions.push((0, drizzle_orm_1.lte)(schema_1.colleges.nirfRank, 30));
+            }
+            else if (rankTier === 'top100') {
+                whereConditions.push((0, drizzle_orm_1.lte)(schema_1.colleges.nirfRank, 100));
+            }
         }
         if (naacGrade && naacGrade !== 'all') {
-            where.naacGrade = { equals: naacGrade };
+            whereConditions.push((0, drizzle_orm_1.eq)(schema_1.colleges.naacGrade, naacGrade));
         }
-        const courseWhere = {};
+        let courseExistsCondition = undefined;
+        const courseFilters = [];
         if (courseKey && courseKey !== 'all') {
-            courseWhere.key = { equals: courseKey };
+            courseFilters.push((0, drizzle_orm_1.eq)(schema_1.courses.key, courseKey));
         }
         if (minAvgPackage !== undefined && !isNaN(minAvgPackage)) {
-            courseWhere.avgPackage = { gte: minAvgPackage };
+            courseFilters.push((0, drizzle_orm_1.gte)(schema_1.courses.avgPackage, minAvgPackage));
         }
-        if (Object.keys(courseWhere).length > 0) {
-            where.courses = {
-                some: courseWhere,
-            };
+        if (courseFilters.length > 0) {
+            const existsSubquery = (0, drizzle_orm_1.sql) `
+        EXISTS (
+          SELECT 1 FROM courses 
+          WHERE courses.collegeId = colleges.id 
+          AND ${(0, drizzle_orm_1.and)(...courseFilters)}
+        )
+      `;
+            whereConditions.push(existsSubquery);
         }
-        let orderBy;
+        const whereClause = whereConditions.length > 0 ? (0, drizzle_orm_1.and)(...whereConditions) : undefined;
+        const countQuery = this.db
+            .select({ total: (0, drizzle_orm_1.sql) `count(*)` })
+            .from(schema_1.colleges)
+            .$dynamic();
+        if (whereClause) {
+            countQuery.where(whereClause);
+        }
+        const [countResult] = await countQuery;
+        const total = Number(countResult?.total) || 0;
+        const collegeQuery = this.db.select().from(schema_1.colleges).$dynamic();
+        if (whereClause) {
+            collegeQuery.where(whereClause);
+        }
+        let orderBy = undefined;
+        const orderFn = sortBy === 'nirf' || sortBy === 'established' ? drizzle_orm_1.asc : drizzle_orm_1.desc;
         switch (sortBy) {
             case 'nirf':
-                orderBy = { nirfRank: 'asc' };
+                orderBy = (0, drizzle_orm_1.asc)(schema_1.colleges.nirfRank);
                 break;
             case 'fees_asc':
-                orderBy = { annualFees: 'asc' };
+                orderBy = (0, drizzle_orm_1.asc)(schema_1.colleges.annualFees);
                 break;
             case 'fees_desc':
-                orderBy = { annualFees: 'desc' };
+                orderBy = (0, drizzle_orm_1.desc)(schema_1.colleges.annualFees);
                 break;
             case 'rating':
-                orderBy = { rating: 'desc' };
+                orderBy = (0, drizzle_orm_1.desc)(schema_1.colleges.rating);
                 break;
             case 'established':
-                orderBy = { established: 'desc' };
+                orderBy = (0, drizzle_orm_1.desc)(schema_1.colleges.established);
                 break;
             default:
-                orderBy = { nirfRank: 'asc' };
+                orderBy = (0, drizzle_orm_1.asc)(schema_1.colleges.nirfRank);
         }
-        const skip = (page - 1) * limit;
-        const [colleges, total] = await Promise.all([
-            this.prisma.college.findMany({
-                where,
-                orderBy,
-                skip,
-                take: limit,
-                include: {
-                    courses: true,
-                },
-            }),
-            this.prisma.college.count({ where }),
-        ]);
+        const collegesResult = await collegeQuery
+            .orderBy(orderBy)
+            .limit(limit)
+            .offset((page - 1) * limit);
+        const collegeIds = collegesResult.map((c) => c.id);
+        let coursesMap = {};
+        if (collegeIds.length > 0) {
+            const allCourses = await this.db
+                .select()
+                .from(schema_1.courses)
+                .where((0, drizzle_orm_1.sql) `collegeId IN (${collegeIds.join(',')})`);
+            coursesMap = allCourses.reduce((acc, curr) => {
+                const key = curr.collegeId;
+                if (!acc[key])
+                    acc[key] = [];
+                acc[key].push(curr);
+                return acc;
+            }, {});
+        }
+        const collegesWithCourses = collegesResult.map((college) => ({
+            ...college,
+            courses: coursesMap[college.id] || [],
+        }));
         if (sortBy === 'naac') {
             const gradeWeights = { 'A++': 3, 'A+': 2, A: 1 };
-            colleges.sort((a, b) => {
+            collegesWithCourses.sort((a, b) => {
                 const weightA = gradeWeights[a.naacGrade ?? ''] || 0;
                 const weightB = gradeWeights[b.naacGrade ?? ''] || 0;
                 return weightB - weightA;
             });
         }
         else if (sortBy === 'avgPackage') {
-            colleges.sort((a, b) => {
-                const maxPackageA = Math.max(...a.courses.map((c) => c.avgPackage || 0), 0);
-                const maxPackageB = Math.max(...b.courses.map((c) => c.avgPackage || 0), 0);
-                return maxPackageB - maxPackageA;
+            collegesWithCourses.sort((a, b) => {
+                const maxA = Math.max(...a.courses.map((c) => c.avgPackage || 0), 0);
+                const maxB = Math.max(...b.courses.map((c) => c.avgPackage || 0), 0);
+                return maxB - maxA;
             });
         }
         return {
-            data: colleges,
+            data: collegesWithCourses,
             meta: {
                 total,
                 page,
@@ -130,17 +163,26 @@ let CollegesService = class CollegesService {
         };
     }
     async findOne(id) {
-        return this.prisma.college.findUnique({
-            where: { id },
-            include: {
-                courses: true,
-            },
-        });
+        const [college] = await this.db
+            .select()
+            .from(schema_1.colleges)
+            .where((0, drizzle_orm_1.eq)(schema_1.colleges.id, id));
+        if (!college)
+            return null;
+        const coursesResult = await this.db
+            .select()
+            .from(schema_1.courses)
+            .where((0, drizzle_orm_1.eq)(schema_1.courses.collegeId, id));
+        return {
+            ...college,
+            courses: coursesResult,
+        };
     }
 };
 exports.CollegesService = CollegesService;
 exports.CollegesService = CollegesService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __param(0, (0, common_1.Inject)(db_provider_1.DRIZZLE)),
+    __metadata("design:paramtypes", [Function])
 ], CollegesService);
 //# sourceMappingURL=colleges.service.js.map

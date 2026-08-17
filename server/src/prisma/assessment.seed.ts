@@ -1,14 +1,16 @@
+// scripts/assessment.seed.ts
 import 'dotenv/config';
-import { PrismaClient } from '../generated/prisma/client';
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { createPool } from 'mysql2/promise';
+import { drizzle } from 'drizzle-orm/mysql2';
+import { colleges, assessmentQuestions } from 'src/db/schema';
 
 const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) {
   throw new Error('DATABASE_URL environment variable is not set');
 }
 
-const adapter = new PrismaMariaDb(dbUrl);
-const prisma = new PrismaClient({ adapter });
+const pool = createPool({ uri: dbUrl });
+const db = drizzle(pool);
 
 const COLLEGES_DATA = [
   {
@@ -100,7 +102,6 @@ const COLLEGES_DATA = [
 
 const ASSESSMENT_QUESTIONS_DATA = [
   {
-    id: 101,
     collegeId: 1,
     text: 'What is the time complexity of searching for an element in a balanced Binary Search Tree (BST)?',
     options: ['O(1)', 'O(n)', 'O(log n)', 'O(n log n)'],
@@ -109,7 +110,6 @@ const ASSESSMENT_QUESTIONS_DATA = [
       'A balanced BST cuts the search space in half with each comparison, resulting in logarithmic time complexity.',
   },
   {
-    id: 102,
     collegeId: 1,
     text: 'Which HTTP status code represents an Internal Server Error?',
     options: [
@@ -122,7 +122,6 @@ const ASSESSMENT_QUESTIONS_DATA = [
     explanation: 'The 5xx series status codes represent server-side errors.',
   },
   {
-    id: 103,
     collegeId: 1,
     text: 'In React, what hook would you use to optimize performance by memoizing a computed value across renders?',
     options: ['useEffect', 'useMemo', 'useCallback', 'useState'],
@@ -130,7 +129,6 @@ const ASSESSMENT_QUESTIONS_DATA = [
     explanation: 'useMemo caches the result of a calculation between renders.',
   },
   {
-    id: 301,
     collegeId: 3,
     text: 'Which scheduling algorithm can cause the problem of starvation?',
     options: [
@@ -144,7 +142,6 @@ const ASSESSMENT_QUESTIONS_DATA = [
       'Priority scheduling allows low-priority tasks to wait indefinitely if higher priority tasks keep coming.',
   },
   {
-    id: 302,
     collegeId: 3,
     text: 'What is the primary role of an Indexing structural framework in PostgreSQL queries?',
     options: [
@@ -158,7 +155,6 @@ const ASSESSMENT_QUESTIONS_DATA = [
       'Indexes allow fast lookup without scanning every row in a table.',
   },
   {
-    id: 501,
     collegeId: 5,
     text: 'Which layer of the OSI model handles logical network addressing and routing?',
     options: [
@@ -172,7 +168,6 @@ const ASSESSMENT_QUESTIONS_DATA = [
       'The Network layer is responsible for logical addressing (IP) and routing.',
   },
   {
-    id: 701,
     collegeId: 7,
     text: 'Which framework is primarily used to analyze the competitive environment of an industry?',
     options: [
@@ -188,17 +183,26 @@ const ASSESSMENT_QUESTIONS_DATA = [
 ];
 
 async function main() {
-  await prisma.assessmentQuestion.deleteMany();
-  await prisma.college.deleteMany();
+  console.log('🧹 Cleaning up existing assessment data...');
+  await db.delete(assessmentQuestions);
+  await db.delete(colleges);
+  console.log('✅ Cleared existing data.');
 
-  await prisma.college.createMany({ data: COLLEGES_DATA });
-  await prisma.assessmentQuestion.createMany({
-    data: ASSESSMENT_QUESTIONS_DATA,
-  });
+  console.log('🌱 Seeding assessment colleges and questions...');
 
-  console.log('Assessment data seeded successfully');
+  // Insert colleges
+  for (const college of COLLEGES_DATA) {
+    await db.insert(colleges).values(college);
+  }
+
+  // Insert questions
+  await db.insert(assessmentQuestions).values(ASSESSMENT_QUESTIONS_DATA);
+
+  console.log('✅ Assessment data seeded successfully.');
+  process.exit(0);
 }
 
-main()
-  .catch((e) => console.error(e))
-  .finally(async () => await prisma.$disconnect());
+main().catch((e) => {
+  console.error('❌ Seeding failed:', e);
+  process.exit(1);
+});

@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SignupDto = void 0;
 const class_validator_1 = require("class-validator");
-const client_1 = require("../../generated/prisma/client");
+const schema_1 = require("../../db/schema");
 class SignupDto {
     name;
     email;
@@ -35,7 +35,7 @@ __decorate([
     __metadata("design:type", String)
 ], SignupDto.prototype, "password", void 0);
 __decorate([
-    (0, class_validator_1.IsEnum)(client_1.Role, {
+    (0, class_validator_1.IsEnum)(schema_1.roleValues, {
         message: 'Please select a valid profile type (STUDENT, COUNSELOR, PARENT, COLLEGE_REP)',
     }),
     __metadata("design:type", String)

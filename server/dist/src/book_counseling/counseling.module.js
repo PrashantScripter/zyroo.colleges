@@ -10,13 +10,12 @@ exports.CounselingModule = void 0;
 const common_1 = require("@nestjs/common");
 const counseling_controller_1 = require("./counseling.controller");
 const counseling_service_1 = require("./counseling.service");
-const prisma_module_1 = require("../prisma/prisma.module");
 let CounselingModule = class CounselingModule {
 };
 exports.CounselingModule = CounselingModule;
 exports.CounselingModule = CounselingModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule],
+        imports: [],
         controllers: [counseling_controller_1.CounselingController],
         providers: [counseling_service_1.CounselingService],
         exports: [counseling_service_1.CounselingService],

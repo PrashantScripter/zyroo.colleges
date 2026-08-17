@@ -1,21 +1,21 @@
 import { Strategy } from 'passport-jwt';
-import { PrismaService } from '../../prisma/prisma.service';
+import type { MySql2Database } from 'drizzle-orm/mysql2';
 declare const JwtStrategy_base: new (...args: [opt: import("passport-jwt").StrategyOptionsWithRequest] | [opt: import("passport-jwt").StrategyOptionsWithoutRequest]) => Strategy & {
     validate(...args: any[]): unknown;
 };
 export declare class JwtStrategy extends JwtStrategy_base {
-    private prisma;
-    constructor(prisma: PrismaService);
+    private db;
+    constructor(db: MySql2Database<typeof import('../../db/schema')>);
     validate(payload: {
         sub: string;
         email: string;
     }): Promise<{
         id: string;
-        name: string;
         email: string;
-        role: import("../../generated/prisma/enums").Role;
+        name: string;
         picture: string | null;
-        createdAt: Date;
+        role: "STUDENT" | "COUNSELOR" | "PARENT" | "COLLEGE_REP" | null;
+        createdAt: Date | null;
     }>;
 }
 export {};

@@ -6,6 +6,8 @@ export declare class CounselingController {
     bookSession(dto: BookCounselingDto): Promise<{
         success: boolean;
         message: string;
-        bookingId: number;
+        bookingId: {
+            id: number;
+        };
     }>;
 }

@@ -12,7 +12,7 @@ export declare class AuthController {
             id: string;
             name: string;
             email: string;
-            role: import("../generated/prisma/enums").Role;
+            role: "STUDENT" | "COUNSELOR" | "PARENT" | "COLLEGE_REP" | null;
             picture: string | null;
         };
     }>;
@@ -23,7 +23,7 @@ export declare class AuthController {
             id: string;
             name: string;
             email: string;
-            role: import("../generated/prisma/enums").Role;
+            role: "STUDENT" | "COUNSELOR" | "PARENT" | "COLLEGE_REP" | null;
             picture: string | null;
         };
     }>;

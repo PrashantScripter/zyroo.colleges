@@ -10,15 +10,14 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
-const prisma_service_1 = require("./prisma/prisma.service");
 const config_1 = require("@nestjs/config");
-const prisma_module_1 = require("./prisma/prisma.module");
 const auth_module_1 = require("./auth/auth.module");
 const colleges_module_1 = require("./colleges/colleges.module");
 const entrance_exams_module_1 = require("./entrance_exam/entrance-exams.module");
 const assessment_module_1 = require("./assessment_test/assessment.module");
 const blogs_module_1 = require("./blogs/blogs.module");
 const counseling_module_1 = require("./book_counseling/counseling.module");
+const db_module_1 = require("./db/db.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -28,16 +27,16 @@ exports.AppModule = AppModule = __decorate([
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
             }),
-            prisma_module_1.PrismaModule,
             auth_module_1.AuthModule,
             colleges_module_1.CollegesModule,
             entrance_exams_module_1.EntranceExamsModule,
             assessment_module_1.AssessmentsModule,
             blogs_module_1.BlogsModule,
-            counseling_module_1.CounselingModule
+            counseling_module_1.CounselingModule,
+            db_module_1.DbModule
         ],
         controllers: [app_controller_1.AppController],
-        providers: [app_service_1.AppService, prisma_service_1.PrismaService],
+        providers: [app_service_1.AppService],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

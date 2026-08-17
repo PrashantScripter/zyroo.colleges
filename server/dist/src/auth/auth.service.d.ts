@@ -1,11 +1,11 @@
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../prisma/prisma.service';
+import type { MySql2Database } from 'drizzle-orm/mysql2';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 export declare class AuthService {
-    private prisma;
+    private db;
     private jwtService;
-    constructor(prisma: PrismaService, jwtService: JwtService);
+    constructor(db: MySql2Database<typeof import('../db/schema')>, jwtService: JwtService);
     signup(dto: SignupDto): Promise<{
         message: string;
         access_token: string;
@@ -13,7 +13,7 @@ export declare class AuthService {
             id: string;
             name: string;
             email: string;
-            role: import("../generated/prisma/enums").Role;
+            role: "STUDENT" | "COUNSELOR" | "PARENT" | "COLLEGE_REP" | null;
             picture: string | null;
         };
     }>;
@@ -24,7 +24,7 @@ export declare class AuthService {
             id: string;
             name: string;
             email: string;
-            role: import("../generated/prisma/enums").Role;
+            role: "STUDENT" | "COUNSELOR" | "PARENT" | "COLLEGE_REP" | null;
             picture: string | null;
         };
     }>;
@@ -39,7 +39,7 @@ export declare class AuthService {
             id: string;
             name: string;
             email: string;
-            role: import("../generated/prisma/enums").Role;
+            role: "STUDENT" | "COUNSELOR" | "PARENT" | "COLLEGE_REP" | null;
             picture: string | null;
         };
     }>;

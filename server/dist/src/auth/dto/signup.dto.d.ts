@@ -1,4 +1,4 @@
-import { Role } from '../../generated/prisma/client';
+import { Role } from '../../db/schema';
 export declare class SignupDto {
     name: string;
     email: string;

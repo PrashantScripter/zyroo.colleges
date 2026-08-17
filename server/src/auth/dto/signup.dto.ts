@@ -1,3 +1,4 @@
+// src/auth/dto/signup.dto.ts
 import {
   IsEmail,
   IsEnum,
@@ -7,7 +8,7 @@ import {
   IsUrl,
   MinLength,
 } from 'class-validator';
-import { Role } from '../../generated/prisma/client';
+import { roleValues, Role } from '../../db/schema'; // Import both the array and the type
 
 export class SignupDto {
   @IsString()
@@ -21,11 +22,12 @@ export class SignupDto {
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
   password!: string;
 
-  @IsEnum(Role, {
+  @IsEnum(roleValues, {
+    // Use the runtime array here
     message:
       'Please select a valid profile type (STUDENT, COUNSELOR, PARENT, COLLEGE_REP)',
   })
-  role!: Role;
+  role!: Role; // Use the type for TypeScript
 
   @IsOptional()
   @IsString()

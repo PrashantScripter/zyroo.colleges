@@ -1,36 +1,48 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+// src/counseling/counseling.service.ts
+import {
+  Injectable,
+  InternalServerErrorException,
+  Inject,
+} from '@nestjs/common';
+import { DRIZZLE } from '../db/db.provider';
+import { counselingBookings } from '../db/schema';
+import type { MySql2Database } from 'drizzle-orm/mysql2';
 import { BookCounselingDto } from './dto/book-counseling.dto';
 import axios from 'axios';
 
 @Injectable()
 export class CounselingService {
-  private brevoApiKey: string; // now definitely a string
+  private brevoApiKey: string;
 
-  constructor(private prisma: PrismaService) {
+  constructor(
+    @Inject(DRIZZLE) private db: MySql2Database<typeof import('../db/schema')>,
+  ) {
     const apiKey = process.env.BREVO_API_KEY;
     if (!apiKey) {
       throw new Error('BREVO_API_KEY is not defined in environment variables');
     }
-    this.brevoApiKey = apiKey; // apiKey is guaranteed non‑null here
+    this.brevoApiKey = apiKey;
   }
 
   async bookSession(dto: BookCounselingDto) {
     try {
-      const booking = await this.prisma.counselingBooking.create({
-        data: {
+      // Insert booking using Drizzle
+      const [insertedId] = await this.db
+        .insert(counselingBookings)
+        .values({
           name: dto.name,
           phone: dto.phone,
           email: dto.email,
           targetCollege: dto.targetCollege,
           stream: dto.stream,
-          preferredDate: new Date(dto.preferredDate),
+          preferredDate: new Date(dto.preferredDate), // Convert string to Date
           preferredTime: dto.preferredTime,
-          concerns: dto.concerns,
-          userId: dto.userId,
-        },
-      });
+          concerns: dto.concerns || null,
+          userId: dto.userId || null,
+        })
+        .$returningId(); // Returns the auto-increment ID
 
+      // Send emails
       await this.sendConfirmationEmail(dto);
       await this.sendAdminNotification(dto);
 
@@ -38,10 +50,9 @@ export class CounselingService {
         success: true,
         message:
           'Counseling session booked successfully. We have sent you a confirmation email.',
-        bookingId: booking.id,
+        bookingId: insertedId,
       };
     } catch (error) {
-      // error is 'unknown'
       console.error('Error booking counseling session:', error);
       throw new InternalServerErrorException(
         'Failed to book counseling session. Please try again later.',
@@ -49,6 +60,7 @@ export class CounselingService {
     }
   }
 
+  // Email methods remain unchanged
   private async sendEmail(
     to: string,
     toName: string,
@@ -76,7 +88,6 @@ export class CounselingService {
         },
       );
     } catch (error: any) {
-      // cast to any to access error.response
       console.error(
         'Brevo email send error:',
         error.response?.data || error.message,

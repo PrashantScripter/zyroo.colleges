@@ -8,62 +8,62 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BlogsService = void 0;
 const common_1 = require("@nestjs/common");
-const prisma_service_1 = require("../prisma/prisma.service");
-const client_1 = require("../generated/prisma/client");
+const drizzle_orm_1 = require("drizzle-orm");
+const db_provider_1 = require("../db/db.provider");
+const schema_1 = require("../db/schema");
 let BlogsService = class BlogsService {
-    prisma;
-    constructor(prisma) {
-        this.prisma = prisma;
+    db;
+    constructor(db) {
+        this.db = db;
     }
     async findAll(query) {
         const { search, category, author, tag, sortBy = 'publishedAt', order = 'desc', page = 1, limit = 10, } = query;
-        const whereClauses = [];
-        const params = [];
-        let paramIndex = 1;
+        const whereConditions = [];
         if (search && search.trim()) {
             const term = `%${search.trim()}%`;
-            whereClauses.push(`(title LIKE $${paramIndex} OR description LIKE $${paramIndex})`);
-            params.push(term);
-            paramIndex++;
+            whereConditions.push((0, drizzle_orm_1.sql) `(title LIKE ${term} OR description LIKE ${term})`);
         }
         if (category) {
-            whereClauses.push(`category = $${paramIndex}`);
-            params.push(category);
-            paramIndex++;
+            whereConditions.push((0, drizzle_orm_1.eq)(schema_1.blogs.category, category));
         }
         if (author) {
-            whereClauses.push(`author = $${paramIndex}`);
-            params.push(author);
-            paramIndex++;
+            whereConditions.push((0, drizzle_orm_1.eq)(schema_1.blogs.author, author));
         }
         if (tag) {
-            whereClauses.push(`JSON_CONTAINS(tags, JSON_QUOTE($${paramIndex}))`);
-            params.push(tag);
-            paramIndex++;
+            whereConditions.push((0, drizzle_orm_1.sql) `JSON_CONTAINS(tags, JSON_QUOTE(${tag}))`);
         }
-        const whereSQL = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-        const orderSQL = `ORDER BY ${sortBy} ${order.toUpperCase()}`;
-        const offset = (page - 1) * limit;
-        const querySQL = client_1.Prisma.sql `
-      SELECT * FROM blogs
-      ${client_1.Prisma.raw(whereSQL)}
-      ${client_1.Prisma.raw(orderSQL)}
-      LIMIT ${limit} OFFSET ${offset}
-    `;
-        const countSQL = client_1.Prisma.sql `
-      SELECT COUNT(*) as total FROM blogs
-      ${client_1.Prisma.raw(whereSQL)}
-    `;
-        const [blogs, countResult] = await this.prisma.$transaction([
-            this.prisma.$queryRaw(querySQL),
-            this.prisma.$queryRaw(countSQL),
-        ]);
-        const total = Number(countResult[0]?.total || 0);
+        const whereClause = whereConditions.length > 0 ? (0, drizzle_orm_1.and)(...whereConditions) : undefined;
+        const countQuery = this.db
+            .select({ total: (0, drizzle_orm_1.sql) `count(*)` })
+            .from(schema_1.blogs)
+            .$dynamic();
+        if (whereClause) {
+            countQuery.where(whereClause);
+        }
+        const [countResult] = await countQuery;
+        const total = Number(countResult?.total) || 0;
+        const orderFn = order === 'asc' ? drizzle_orm_1.asc : drizzle_orm_1.desc;
+        const orderByCol = sortBy === 'publishedAt'
+            ? schema_1.blogs.publishedAt
+            : sortBy === 'likes'
+                ? schema_1.blogs.likes
+                : schema_1.blogs.views;
+        const dataQuery = this.db.select().from(schema_1.blogs).$dynamic();
+        if (whereClause) {
+            dataQuery.where(whereClause);
+        }
+        const blogsResult = await dataQuery
+            .orderBy(orderFn(orderByCol))
+            .limit(limit)
+            .offset((page - 1) * limit);
         return {
-            data: blogs,
+            data: blogsResult,
             meta: {
                 total,
                 page,
@@ -73,39 +73,50 @@ let BlogsService = class BlogsService {
         };
     }
     async findOne(id) {
-        const blog = await this.prisma.blog.findUnique({ where: { id } });
-        if (!blog) {
+        const result = await this.db.select().from(schema_1.blogs).where((0, drizzle_orm_1.eq)(schema_1.blogs.id, id));
+        if (result.length === 0) {
             throw new common_1.NotFoundException(`Blog with ID ${id} not found`);
         }
-        return blog;
+        return result[0];
     }
     async incrementViews(id) {
-        return this.prisma.blog.update({
-            where: { id },
-            data: { views: { increment: 1 } },
-        });
+        await this.db
+            .update(schema_1.blogs)
+            .set({ views: (0, drizzle_orm_1.sql) `views + 1` })
+            .where((0, drizzle_orm_1.eq)(schema_1.blogs.id, id));
+        const [updated] = await this.db
+            .select()
+            .from(schema_1.blogs)
+            .where((0, drizzle_orm_1.eq)(schema_1.blogs.id, id));
+        return updated;
     }
     async create(data) {
-        return this.prisma.blog.create({
-            data: {
-                title: data.title,
-                description: data.description,
-                content: data.content,
-                image: data.image,
-                category: data.category,
-                author: data.author,
-                authorType: data.authorType,
-                tags: data.tags,
-                likes: data.likes ?? 0,
-                views: data.views ?? 0,
-                publishedAt: data.publishedAt ?? new Date(),
-            },
+        await this.db.insert(schema_1.blogs).values({
+            title: data.title,
+            description: data.description,
+            content: data.content,
+            image: data.image,
+            category: data.category,
+            author: data.author,
+            authorType: data.authorType,
+            tags: data.tags,
+            likes: data.likes ?? 0,
+            views: data.views ?? 0,
+            publishedAt: data.publishedAt ?? new Date(),
         });
+        const [newBlog] = await this.db
+            .select()
+            .from(schema_1.blogs)
+            .where((0, drizzle_orm_1.eq)(schema_1.blogs.title, data.title))
+            .orderBy((0, drizzle_orm_1.desc)(schema_1.blogs.createdAt))
+            .limit(1);
+        return newBlog;
     }
 };
 exports.BlogsService = BlogsService;
 exports.BlogsService = BlogsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __param(0, (0, common_1.Inject)(db_provider_1.DRIZZLE)),
+    __metadata("design:paramtypes", [Function])
 ], BlogsService);
 //# sourceMappingURL=blogs.service.js.map

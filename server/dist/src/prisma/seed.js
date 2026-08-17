@@ -1,14 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
-const client_1 = require("../generated/prisma/client");
-const adapter_mariadb_1 = require("@prisma/adapter-mariadb");
+const promise_1 = require("mysql2/promise");
+const mysql2_1 = require("drizzle-orm/mysql2");
+const schema_1 = require("../db/schema");
 const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) {
     throw new Error('DATABASE_URL environment variable is not set');
 }
-const adapter = new adapter_mariadb_1.PrismaMariaDb(dbUrl);
-const prisma = new client_1.PrismaClient({ adapter });
+const pool = (0, promise_1.createPool)({ uri: dbUrl });
+const db = (0, mysql2_1.drizzle)(pool);
 const COLLEGES_DATA = [
     {
         name: 'Indian Institute of Technology (IIT), Madras',
@@ -218,29 +219,30 @@ const COLLEGES_DATA = [
     },
 ];
 async function main() {
-    console.log('Cleaning up existing college and course data...');
-    await prisma.course.deleteMany();
-    await prisma.college.deleteMany();
-    console.log('Seeding updated college and course records...');
+    console.log('🧹 Cleaning up existing college and course data...');
+    await db.delete(schema_1.courses);
+    await db.delete(schema_1.colleges);
+    console.log('✅ Cleared existing data.');
+    console.log('🌱 Seeding colleges and courses...');
     for (const collegeItem of COLLEGES_DATA) {
-        const { courses, ...collegeData } = collegeItem;
-        await prisma.college.create({
-            data: {
-                ...collegeData,
-                courses: {
-                    create: courses,
-                },
-            },
-        });
+        const { courses: courseData, ...collegeData } = collegeItem;
+        const [insertedCollege] = await db
+            .insert(schema_1.colleges)
+            .values(collegeData)
+            .$returningId();
+        const collegeId = insertedCollege.id;
+        if (courseData.length > 0) {
+            await db.insert(schema_1.courses).values(courseData.map((course) => ({
+                ...course,
+                collegeId: collegeId,
+            })));
+        }
     }
-    console.log('Colleges and relational courses seeded successfully.');
+    console.log('✅ Colleges and relational courses seeded successfully.');
+    process.exit(0);
 }
-main()
-    .catch((e) => {
-    console.error('Error seeding database:', e);
+main().catch((e) => {
+    console.error('❌ Error seeding database:', e);
     process.exit(1);
-})
-    .finally(async () => {
-    await prisma.$disconnect();
 });
 //# sourceMappingURL=seed.js.map
