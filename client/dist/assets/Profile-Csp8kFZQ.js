@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-n5LQ9ujS.js";import{u as t}from"./index-6sgdE4RT.js";var n=t(),r=e();function i(){let e=(0,n.c)(1),t;return e[0]===Symbol.for(`react.memo_cache_sentinel`)?(t=(0,r.jsx)(`div`,{children:`Under Construction.`}),e[0]=t):t=e[0],t}export{i as default};
