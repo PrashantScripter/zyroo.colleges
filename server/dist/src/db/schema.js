@@ -12,7 +12,7 @@ exports.roleValues = [
 ];
 exports.examStatusValues = ['open', 'upcoming', 'closed'];
 exports.roleEnum = (0, mysql_core_1.mysqlEnum)('role', exports.roleValues);
-exports.examStatusEnum = (0, mysql_core_1.mysqlEnum)('exam_status', exports.examStatusValues);
+exports.examStatusEnum = (0, mysql_core_1.mysqlEnum)('status', exports.examStatusValues);
 exports.users = (0, mysql_core_1.mysqlTable)('User', {
     id: (0, mysql_core_1.varchar)('id', { length: 36 })
         .primaryKey()

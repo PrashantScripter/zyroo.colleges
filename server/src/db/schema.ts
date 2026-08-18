@@ -25,7 +25,7 @@ export const examStatusValues = ['open', 'upcoming', 'closed'] as const;
 
 // Create the enum columns using the arrays
 export const roleEnum = mysqlEnum('role', roleValues);
-export const examStatusEnum = mysqlEnum('exam_status', examStatusValues);
+export const examStatusEnum = mysqlEnum('status', examStatusValues);
 
 // Export the types (union of the literal values)
 export type Role = (typeof roleValues)[number];

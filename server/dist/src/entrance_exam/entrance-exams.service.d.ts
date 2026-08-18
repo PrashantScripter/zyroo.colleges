@@ -8,6 +8,7 @@ export declare class EntranceExamsService {
             registration: string;
             examDates: string;
         };
+        status: "open" | "upcoming" | "closed";
         id: string;
         name: string;
         createdAt: Date | null;
@@ -15,7 +16,6 @@ export declare class EntranceExamsService {
         updatedAt: Date | null;
         stream: string;
         conductingBody: string;
-        status: "open" | "upcoming" | "closed";
         eligibility: string;
         targetColleges: string;
     }[]>;
@@ -24,6 +24,7 @@ export declare class EntranceExamsService {
             registration: string;
             examDates: string;
         };
+        status: "open" | "upcoming" | "closed";
         id: string;
         name: string;
         createdAt: Date | null;
@@ -31,7 +32,6 @@ export declare class EntranceExamsService {
         updatedAt: Date | null;
         stream: string;
         conductingBody: string;
-        status: "open" | "upcoming" | "closed";
         eligibility: string;
         targetColleges: string;
     }>;

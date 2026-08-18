@@ -1,7 +1,7 @@
 export declare const roleValues: readonly ["STUDENT", "COUNSELOR", "PARENT", "COLLEGE_REP"];
 export declare const examStatusValues: readonly ["open", "upcoming", "closed"];
 export declare const roleEnum: import("drizzle-orm/mysql-core").MySqlEnumColumnBuilderInitial<"role", ["STUDENT", "COUNSELOR", "PARENT", "COLLEGE_REP"]>;
-export declare const examStatusEnum: import("drizzle-orm/mysql-core").MySqlEnumColumnBuilderInitial<"exam_status", ["open", "upcoming", "closed"]>;
+export declare const examStatusEnum: import("drizzle-orm/mysql-core").MySqlEnumColumnBuilderInitial<"status", ["open", "upcoming", "closed"]>;
 export type Role = (typeof roleValues)[number];
 export type ExamStatus = (typeof examStatusValues)[number];
 export declare const users: import("drizzle-orm/mysql-core").MySqlTableWithColumns<{
@@ -1010,7 +1010,7 @@ export declare const entranceExams: import("drizzle-orm/mysql-core").MySqlTableW
             generated: undefined;
         }, {}, {}>;
         status: import("drizzle-orm/mysql-core").MySqlColumn<{
-            name: "exam_status";
+            name: "status";
             tableName: "entrance_exams";
             dataType: "string";
             columnType: "MySqlEnumColumn";
