@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "79429208-21b7-4a3a-8d1b-fe8c18ede82a",
+  "id": "fec71ac0-6eab-4dce-97f2-1af988e47175",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "assessment_questions": {
@@ -276,7 +276,7 @@
         },
         "naacGrade": {
           "name": "naacGrade",
-          "type": "varchar(10)",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -717,8 +717,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "exam_status": {
-          "name": "exam_status",
+        "status": {
+          "name": "status",
           "type": "enum('open','upcoming','closed')",
           "primaryKey": false,
           "notNull": true,
@@ -780,7 +780,7 @@
         "entrance_exams_status_idx": {
           "name": "entrance_exams_status_idx",
           "columns": [
-            "exam_status"
+            "status"
           ],
           "isUnique": false
         }

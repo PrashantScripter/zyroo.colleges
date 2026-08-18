@@ -35,7 +35,7 @@ CREATE TABLE `colleges` (
 	`stream` varchar(255) NOT NULL,
 	`category` varchar(255) NOT NULL,
 	`nirfRank` int NOT NULL,
-	`naacGrade` varchar(10),
+	`naacGrade` varchar(50),
 	`annualFees` float NOT NULL,
 	`rating` float NOT NULL DEFAULT 0,
 	`image` text NOT NULL,
@@ -94,7 +94,7 @@ CREATE TABLE `entrance_exams` (
 	`stream` varchar(255) NOT NULL,
 	`conductingBody` varchar(255) NOT NULL,
 	`mode` varchar(50) NOT NULL,
-	`exam_status` enum('open','upcoming','closed') NOT NULL,
+	`status` enum('open','upcoming','closed') NOT NULL,
 	`registrationTimeline` varchar(255) NOT NULL,
 	`examDatesTimeline` varchar(255) NOT NULL,
 	`eligibility` text NOT NULL,
@@ -130,4 +130,4 @@ CREATE INDEX `counseling_bookings_createdAt_idx` ON `counseling_bookings` (`crea
 CREATE INDEX `courses_collegeId_idx` ON `courses` (`collegeId`);--> statement-breakpoint
 CREATE INDEX `courses_key_idx` ON `courses` (`key`);--> statement-breakpoint
 CREATE INDEX `entrance_exams_stream_idx` ON `entrance_exams` (`stream`);--> statement-breakpoint
-CREATE INDEX `entrance_exams_status_idx` ON `entrance_exams` (`exam_status`);
+CREATE INDEX `entrance_exams_status_idx` ON `entrance_exams` (`status`);

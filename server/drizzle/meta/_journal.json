@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1786904824924,
-      "tag": "0000_puzzling_ender_wiggin",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1787042865063,
-      "tag": "0001_large_flatman",
+      "when": 1787056895384,
+      "tag": "0000_ancient_triton",
       "breakpoints": true
     }
   ]
